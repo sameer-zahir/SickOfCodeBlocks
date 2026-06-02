@@ -1,0 +1,201 @@
+// CLI argument parsing via Node's built-in util.parseArgs (no dependency).
+// Maps flags + presets onto a SanitizeOptions object and resolves the input
+// source / output targets.
+
+import { parseArgs } from "node:util";
+import { readFileSync } from "node:fs";
+import { DEFAULTS, type SanitizeOptions, type TableMode } from "./pipeline.js";
+import { presetPatch, type Preset } from "./presets.js";
+
+export type InputSource =
+  | { kind: "file"; path: string }
+  | { kind: "clip" }
+  | { kind: "stdin" };
+
+export interface ParsedCli {
+  options: SanitizeOptions;
+  source: InputSource;
+  outFile?: string;
+  toClipboard: boolean;
+  showHelp: boolean;
+  showVersion: boolean;
+}
+
+export class UsageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UsageError";
+  }
+}
+
+const TABLE_MODES = new Set<TableMode>(["reconstruct", "ascii", "strip", "keep"]);
+
+export function getVersion(): string {
+  try {
+    const url = new URL("../package.json", import.meta.url);
+    const pkg = JSON.parse(readFileSync(url, "utf8")) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+function parsePositiveInt(value: string, flag: string): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new UsageError(`${flag} expects a positive integer (got "${value}")`);
+  }
+  return n;
+}
+
+export function parseCli(argv: string[]): ParsedCli {
+  let parsed;
+  try {
+    parsed = parseArgs({
+      args: argv,
+      allowPositionals: true,
+      options: {
+        clip: { type: "boolean", short: "c" },
+        out: { type: "string", short: "o" },
+        emulate: { type: "boolean", short: "e" },
+        cols: { type: "string" },
+        rows: { type: "string" },
+        table: { type: "string", short: "t" },
+        "no-links": { type: "boolean" },
+        "strip-emoji": { type: "boolean" },
+        "no-glyphs": { type: "boolean" },
+        "keep-glyphs": { type: "boolean" },
+        "no-typographic": { type: "boolean" },
+        arrows: { type: "boolean" },
+        "expand-tabs": { type: "boolean" },
+        "tab-width": { type: "string" },
+        crlf: { type: "boolean" },
+        "no-collapse-blanks": { type: "boolean" },
+        redact: { type: "boolean", short: "r" },
+        slack: { type: "boolean" },
+        email: { type: "boolean" },
+        plain: { type: "boolean" },
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+      },
+    });
+  } catch (e) {
+    throw new UsageError((e as Error).message);
+  }
+
+  const v = parsed.values;
+  const positionals = parsed.positionals;
+
+  if (v.help) return baseResult({ showHelp: true });
+  if (v.version) return baseResult({ showVersion: true });
+
+  // Defaults, then preset, then explicit flags (explicit always wins).
+  let o: SanitizeOptions = { ...DEFAULTS };
+  const preset: Preset | null = v.plain
+    ? "plain"
+    : v.email
+      ? "email"
+      : v.slack
+        ? "slack"
+        : null;
+  if (preset) o = { ...o, ...presetPatch(preset) };
+
+  if (v.table !== undefined) {
+    if (!TABLE_MODES.has(v.table as TableMode)) {
+      throw new UsageError(
+        `invalid --table mode "${v.table}" (use reconstruct|ascii|strip|keep)`,
+      );
+    }
+    o.tableMode = v.table as TableMode;
+  }
+  if (v.emulate) o.emulate = true;
+  if (v.cols !== undefined) o.emulateCols = parsePositiveInt(v.cols, "--cols");
+  if (v.rows !== undefined) o.emulateRows = parsePositiveInt(v.rows, "--rows");
+  if (v["no-links"]) o.hyperlinks = false;
+  if (v["strip-emoji"]) o.stripEmoji = true;
+  if (v["no-glyphs"] || v["keep-glyphs"]) o.stripGlyphs = false;
+  if (v["no-typographic"]) o.typographic = false;
+  if (v.arrows) o.arrows = true;
+  if (v["no-collapse-blanks"]) o.collapseBlankLines = false;
+  if (v.crlf) o.newline = "crlf";
+  if (v.redact) o.redact = true;
+  if (v["tab-width"] !== undefined) {
+    o.expandTabs = parsePositiveInt(v["tab-width"], "--tab-width");
+  } else if (v["expand-tabs"]) {
+    o.expandTabs = 4;
+  }
+
+  const first = positionals[0];
+  const source: InputSource = first
+    ? { kind: "file", path: first }
+    : v.clip
+      ? { kind: "clip" }
+      : { kind: "stdin" };
+
+  const result: ParsedCli = {
+    options: o,
+    source,
+    toClipboard: Boolean(v.clip),
+    showHelp: false,
+    showVersion: false,
+  };
+  if (v.out !== undefined) result.outFile = v.out;
+  return result;
+}
+
+function baseResult(over: Partial<ParsedCli>): ParsedCli {
+  return {
+    options: { ...DEFAULTS },
+    source: { kind: "stdin" },
+    toClipboard: false,
+    showHelp: false,
+    showVersion: false,
+    ...over,
+  };
+}
+
+export const HELP_TEXT = `socb - Sick Of Code Blocks
+Convert raw terminal output into clean plain text for email / Slack / docs.
+
+USAGE
+  socb [options] [file]
+  <command> | socb [options]
+  socb --clip [options]
+
+  Input priority:  [file] argument  >  --clip  >  piped stdin
+
+OPTIONS
+  -c, --clip            read from clipboard and write the result back to it
+  -o, --out <file>      write result to <file> (default: stdout)
+  -e, --emulate         render through a headless terminal (needs @xterm/headless);
+                        use for multi-line redraws (docker, cargo, pip) and TUIs
+      --cols <n>        emulator width  (default 200)
+      --rows <n>        emulator height (default 600)
+  -t, --table <mode>    reconstruct | ascii | strip | keep   (default: reconstruct)
+      --no-links        do not rewrite OSC 8 hyperlinks to "text (url)"
+      --strip-emoji     remove emoji, ZWJ sequences, variation selectors, skin tones
+      --no-glyphs       keep Nerd Font / Private-Use glyphs (default strips them)
+      --no-typographic  keep smart quotes / em-dashes / ellipsis (default -> ASCII)
+      --arrows          also convert arrows  (-> for the right arrow, etc.)
+      --expand-tabs     convert tabs to spaces (4 wide)
+      --tab-width <n>   set tab width and expand tabs
+      --crlf            emit CRLF line endings (default LF)
+      --no-collapse-blanks  keep runs of blank lines
+  -r, --redact          mask secrets/PII (API keys, JWTs, emails, IPs, home paths)
+  -h, --help            show this help
+  -v, --version         show version
+
+PRESETS  (apply a bundle; individual flags still override)
+      --slack           tables reconstructed, emoji kept, typographic on
+      --email           tables stripped, emoji stripped, typographic on
+      --plain           tables stripped, emoji+glyphs stripped, arrows + tabs->spaces
+
+EXAMPLES
+  npm install | socb
+  docker ps | socb --table ascii
+  pytest | socb --redact > clean.txt
+  socb --clip --redact
+  socb build.log --emulate
+
+--redact is best-effort, not a security guarantee. Review output before sharing.
+`;
