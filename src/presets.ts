@@ -3,7 +3,7 @@
 
 import type { SanitizeOptions } from "./pipeline.js";
 
-export type Preset = "slack" | "email" | "plain";
+export type Preset = "slack" | "email" | "plain" | "agent";
 
 export function presetPatch(preset: Preset): Partial<SanitizeOptions> {
   switch (preset) {
@@ -18,11 +18,17 @@ export function presetPatch(preset: Preset): Partial<SanitizeOptions> {
       };
     case "email":
       // Email is often a proportional font -> aligned tables break; strip borders.
+      // Flatten Markdown/HTML and reflow wraps so a paste reads as plain prose.
       return {
         tableMode: "strip",
         stripEmoji: true,
         stripGlyphs: true,
         typographic: true,
+        markdown: true,
+        html: true,
+        prompts: true,
+        powershell: true,
+        reflow: true,
       };
     case "plain":
       // Maximum ASCII safety for any destination.
@@ -31,8 +37,26 @@ export function presetPatch(preset: Preset): Partial<SanitizeOptions> {
         stripEmoji: true,
         stripGlyphs: true,
         typographic: true,
+        markdown: true,
+        html: true,
+        prompts: true,
+        powershell: true,
+        reflow: true,
         arrows: true,
         expandTabs: 4,
+      };
+    case "agent":
+      // Tuned for feeding output INTO a model: kill ANSI/progress/glyph/box noise
+      // to cut tokens, but KEEP Markdown structure and Unicode (models read them
+      // fine, so flattening/ASCII-folding would just lose signal).
+      return {
+        tableMode: "strip",
+        stripGlyphs: true,
+        stripEmoji: false,
+        typographic: false,
+        markdown: false,
+        html: false,
+        reflow: false,
       };
   }
 }

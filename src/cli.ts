@@ -12,6 +12,7 @@ import {
   type ParsedCli,
 } from "./options.js";
 import { isPipedStdin, readStdin } from "./io/stdin.js";
+import { decodeInput } from "./io/decode.js";
 import { readClipboard, writeClipboard, ClipboardError } from "./io/clipboard.js";
 import { sanitize, shouldSuggestEmulate } from "./pipeline.js";
 import { EmulateUnavailableError } from "./transforms/emulate.js";
@@ -23,7 +24,7 @@ function fail(message: string): void {
 
 async function loadInput(cli: ParsedCli): Promise<string> {
   if (cli.source.kind === "file") {
-    return readFileSync(cli.source.path, "utf8");
+    return decodeInput(readFileSync(cli.source.path));
   }
   if (cli.source.kind === "clip") {
     return readClipboard();

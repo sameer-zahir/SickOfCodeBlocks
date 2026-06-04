@@ -30,4 +30,19 @@ export default defineConfig([
     dts: true,
     external: ["@xterm/headless"],
   },
+  {
+    // MCP server bin. @modelcontextprotocol/sdk is an optional dep, kept external
+    // so it is loaded from node_modules at runtime (only when socb-mcp is used).
+    entry: { mcp: "src/mcp.ts" },
+    format: ["esm"],
+    target: "node20",
+    platform: "node",
+    bundle: true,
+    clean: false,
+    splitting: false,
+    sourcemap: false,
+    dts: false,
+    external: ["@xterm/headless", "@modelcontextprotocol/sdk"],
+    banner: { js: "#!/usr/bin/env node" },
+  },
 ]);
