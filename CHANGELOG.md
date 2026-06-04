@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-04
+
 ### Added
 - **Markdown flattening** (`--markdown` / `-m`; on in `--email` / `--plain`):
   drops headings, `**bold**`/`*italic*`/`~~strike~~`, inline `` `code` `` and list
@@ -32,6 +34,10 @@ All notable changes to this project are documented here. The format is based on
 - Strip Markdown code fences (```` ``` ````/`~~~`) and PowerShell `~~~~~` error
   underlines so pasted output is fence-free (on by default; `--no-fences` to
   keep them). New `stripFences` option / exported transform.
+
+## [0.1.1] - 2026-06-02
+
+### Added
 - Initial release: `sickofcodeblocks` / `socb` CLI.
 - Core pipeline: OSC 8 hyperlink rewrite, carriage-return/spinner collapse,
   augmented ANSI/OSC/DCS/APC escape stripping, Nerd Font/Powerline glyph
