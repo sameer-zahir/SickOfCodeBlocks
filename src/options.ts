@@ -8,7 +8,9 @@ import { DEFAULTS, type SanitizeOptions, type TableMode } from "./pipeline.js";
 import { presetPatch, type Preset } from "./presets.js";
 import { loadConfig } from "./config.js";
 
-const DEFAULT_INTERVAL_MS = 800;
+// Polling cost is higher on Windows (each tick spawns PowerShell for the
+// clipboard), so default to a slower poll there.
+const DEFAULT_INTERVAL_MS = process.platform === "win32" ? 1500 : 800;
 
 export type InputSource =
   | { kind: "file"; path: string }
@@ -22,6 +24,7 @@ export interface ParsedCli {
   toClipboard: boolean;
   watch: boolean;
   interval: number;
+  quiet: boolean;
   showHelp: boolean;
   showVersion: boolean;
 }
@@ -90,6 +93,7 @@ export function parseCli(argv: string[]): ParsedCli {
         crlf: { type: "boolean" },
         "no-collapse-blanks": { type: "boolean" },
         redact: { type: "boolean", short: "r" },
+        quiet: { type: "boolean", short: "q" },
         watch: { type: "boolean", short: "w" },
         interval: { type: "string" },
         slack: { type: "boolean" },
@@ -177,6 +181,7 @@ export function parseCli(argv: string[]): ParsedCli {
     toClipboard: Boolean(v.clip),
     watch: Boolean(v.watch),
     interval,
+    quiet: Boolean(v.quiet),
     showHelp: false,
     showVersion: false,
   };
@@ -191,6 +196,7 @@ function baseResult(over: Partial<ParsedCli>): ParsedCli {
     toClipboard: false,
     watch: false,
     interval: DEFAULT_INTERVAL_MS,
+    quiet: false,
     showHelp: false,
     showVersion: false,
     ...over,
@@ -234,17 +240,19 @@ OPTIONS
       --crlf            emit CRLF line endings (default LF)
       --no-collapse-blanks  keep runs of blank lines
   -r, --redact          mask secrets/PII (API keys, JWTs, emails, IPs, home paths)
+  -q, --quiet           in --clip mode, suppress the change summary on stderr
   -w, --watch           keep cleaning the clipboard in place (Ctrl+C to stop)
-      --interval <ms>   --watch poll interval (default 800)
+      --interval <ms>   --watch poll interval (default 800, 1500 on Windows)
   -h, --help            show this help
   -v, --version         show version
 
 PRESETS  (apply a bundle; individual flags still override)
       --slack           tables reconstructed, emoji kept, typographic on
-      --email           + flatten Markdown/HTML, strip prompts, reflow wraps
+      --email           flatten Markdown, strip tables/emoji/glyphs -> readable prose
       --plain           email preset + arrows + tabs->spaces (max compatibility)
       --agent           denoise for feeding output INTO a model: strip ANSI/box/
                         glyph noise, KEEP Markdown structure + Unicode (no folding)
+      (--html, --prompts, --reflow, --powershell are opt-in, not in any preset)
 
 CONFIG  (set persistent defaults so you don't repeat flags)
   ~/.socbrc.json  or  ./.socbrc.json , e.g.  { "redact": true, "tableMode": "strip" }

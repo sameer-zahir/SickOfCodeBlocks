@@ -16,7 +16,10 @@ function isStructured(line: string): boolean {
   if (/^\s/.test(line)) return true; // indented: code / quote / nested list
   if (line.indexOf("|") !== -1) return true; // table row
   if (line.indexOf(NUL) !== -1) return true; // protected code sentinel
-  if (/^(?:-|\d+\.)\s/.test(line)) return true; // list item (post-normalization)
+  if (/^#{1,6}(?:\s|$)/.test(line)) return true; // ATX heading (raw)
+  if (/^>/.test(line)) return true; // blockquote (raw)
+  if (/^(?:[-*+]|\d+[.)])\s/.test(line)) return true; // list item (raw or normalized)
+  if (/^[-=*_ ]{3,}$/.test(line)) return true; // horizontal rule / setext underline
   return false;
 }
 

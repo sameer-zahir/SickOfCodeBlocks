@@ -123,6 +123,9 @@ export async function sanitize(
     s = protectedCode.text;
     codes = protectedCode.codes;
   }
+  // Reflow before markup is stripped, so raw #/>/list/rule markers still mark
+  // paragraph boundaries (code is already protected as sentinels).
+  if (o.reflow) s = reflowParagraphs(s); // step 6r
   if (o.html) s = htmlToText(s); // step 6b' (inside the code bracket)
   if (o.markdown) s = flattenMarkdownText(s); // step 6c
   else if (o.stripFences) s = stripFences(s); // step 6b
@@ -130,7 +133,6 @@ export async function sanitize(
   s = transformTables(s, o.tableMode); // step 7
   if (o.stripEmoji) s = stripEmoji(s); // step 8
   if (o.typographic) s = normalizeTypography(s, o.arrows); // step 9
-  if (o.reflow) s = reflowParagraphs(s); // step 9a
   if (o.markdown) s = restoreCodes(s, codes); // step 9b: code back, verbatim
   if (o.redact) s = redact(s, o.maxLineLength); // step 10
 

@@ -23,6 +23,15 @@ All notable changes to this project are documented here. The format is based on
   fonts (conservative; under-joins rather than over-joins).
 - **`--agent` preset**: denoise for feeding output *into* a model — strip
   ANSI/box/glyph noise but keep Markdown structure and Unicode.
+- **Clipboard feedback**: `socb --clip` prints a one-line change summary on stderr
+  (lines/bytes/escape-sequences); `-q` / `--quiet` silences it.
+- **Safer `--watch`**: a plain `socb --watch` only rewrites copies that look like
+  terminal output (so it can be left running without touching ordinary text);
+  `--markdown`/`--html` opt back into transforming every copy. Slower default poll
+  on Windows (1500 ms) to cut the PowerShell-spawn cost.
+- `--email` / `--plain` presets flatten Markdown but keep `--html`, `--prompts`,
+  `--reflow`, and `--powershell` **opt-in** — they can alter ordinary prose
+  (`<generics>`, a leading `$`, hard-wrapped paragraphs), so they aren't bundled.
 - **UTF-16 / BOM input decoding**: Windows files and clipboard exports no longer
   mojibake. New `decodeInput` helper.
 - **MCP server** (`socb-mcp`): exposes `sanitize_text` to Claude Desktop / Claude

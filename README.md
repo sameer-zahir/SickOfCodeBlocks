@@ -51,6 +51,23 @@ docker ps | socb --table ascii       # tables as +--+ instead of aligned columns
 pytest 2>&1 | socb --plain > clean.txt
 ```
 
+## Recipes
+
+Real workflows, with the exact command:
+
+| You want to… | Run |
+|---|---|
+| Share a failing build/test in Slack | `npm test 2>&1 \| socb --slack` |
+| Email an AI answer or README as plain prose | copy it, then `socb --clip --email` |
+| Clean a log file for a gist / bug report | `socb build.log --plain > clean.txt` |
+| Auto-clean every copy (set & forget) | `socb --watch` |
+| Scrub secrets before sharing | `socb --clip --redact` |
+| Tidy a pasted terminal session (prompts + wraps) | `socb session.txt --email --prompts --reflow` |
+| Tidy a PowerShell error block | `socb err.txt --ps` |
+| Feed clean output to an LLM / agent | `some-cmd \| socb --agent` |
+
+`--clip` reads the clipboard, cleans it, writes it back, and prints a one-line summary — then just paste. (`-q`/`--quiet` silences the summary.)
+
 ## Automate it (no per-copy command)
 
 Don't want to run `socb` every time? Two ways to make it automatic:
@@ -142,12 +159,14 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 
 Presets set a bundle of defaults; any explicit flag still overrides them (e.g. `--email --no-markdown`).
 
-| Preset | Tables | Markdown / HTML | Notes |
+| Preset | Tables | Markdown | Notes |
 |---|---|---|---|
 | `--slack` | reconstruct | left as-is | Slack renders Unicode; aligned tables read well |
-| `--email` | strip | **flattened** | + reflow wraps, strip prompts, tidy PowerShell. For proportional fonts (email / Docs / Word) |
+| `--email` | strip | **flattened** | Markdown → readable prose for proportional fonts (email / Docs / Word) |
 | `--plain` | strip | **flattened** | The `--email` bundle + arrows + tabs→spaces. Maximum compatibility |
 | `--agent` | strip | kept (structure) | Denoise for feeding output **into** a model: strips ANSI/box/glyph noise but keeps Markdown + Unicode (no flattening, no ASCII folding) |
+
+`--html`, `--prompts`, `--reflow`, and `--powershell` are **not** bundled into the presets — each can alter ordinary prose (`<generics>`, a leading `$`, hard-wrapped paragraphs), so add them explicitly when your input needs them (e.g. `socb --email --reflow`).
 
 ## Markdown & rich paste
 

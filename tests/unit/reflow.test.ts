@@ -34,4 +34,14 @@ describe("reflowParagraphs", () => {
   it("returns single-line input unchanged", () => {
     expect(reflowParagraphs("one line only")).toBe("one line only");
   });
+
+  it("does not merge a Markdown heading into the previous paragraph", () => {
+    expect(reflowParagraphs(long + "\n## Next\nbody")).toBe(long + "\n## Next\nbody");
+  });
+
+  it("treats raw blockquotes, *-bullets, and rules as boundaries", () => {
+    expect(reflowParagraphs(long + "\n> quote")).toBe(long + "\n> quote");
+    expect(reflowParagraphs(long + "\n* item")).toBe(long + "\n* item");
+    expect(reflowParagraphs(long + "\n---")).toBe(long + "\n---");
+  });
 });

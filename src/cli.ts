@@ -13,6 +13,7 @@ import {
 } from "./options.js";
 import { isPipedStdin, readStdin } from "./io/stdin.js";
 import { decodeInput } from "./io/decode.js";
+import { summarizeChange } from "./io/summary.js";
 import { readClipboard, writeClipboard, ClipboardError } from "./io/clipboard.js";
 import { sanitize, shouldSuggestEmulate } from "./pipeline.js";
 import { EmulateUnavailableError } from "./transforms/emulate.js";
@@ -62,7 +63,7 @@ async function main(argv: string[]): Promise<number> {
   if (cli.watch) {
     // Runs until interrupted (Ctrl+C); runWatch calls process.exit on signal.
     try {
-      await runWatch(cli.options, cli.interval);
+      await runWatch(cli.options, cli.interval, cli.quiet);
     } catch (e) {
       if (e instanceof ClipboardError) {
         fail(e.message);
@@ -129,6 +130,9 @@ async function main(argv: string[]): Promise<number> {
       }
       throw e;
     }
+    // The cleaned text went to the clipboard, so without this the user has no
+    // feedback that anything happened.
+    if (!cli.quiet) process.stderr.write(`socb: ${summarizeChange(raw, out)}\n`);
     wrote = true;
   }
   if (!wrote) process.stdout.write(withNewline);

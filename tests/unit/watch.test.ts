@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { watchTick, type WatchState } from "../../src/watch.js";
+import { watchTick, looksMessy, type WatchState } from "../../src/watch.js";
 import { sanitize } from "../../src/pipeline.js";
 
 const clean = (s: string) => sanitize(s);
@@ -67,5 +67,46 @@ describe("watchTick", () => {
       state,
     );
     expect(result).toBe("skip");
+  });
+
+  it("looksMessy detects terminal noise but not plain text", () => {
+    expect(looksMessy("\x1b[31mred\x1b[0m")).toBe(true); // ANSI
+    expect(looksMessy("a\rb")).toBe(true); // mid-line carriage return
+    expect(looksMessy("ordinary copied text, nothing special")).toBe(false);
+    expect(looksMessy("line one\nline two\n")).toBe(false); // plain newlines are fine
+  });
+
+  it("skips an un-messy clipboard when the messy-only gate is set", async () => {
+    let writes = 0;
+    const state: WatchState = { last: "" };
+    const result = await watchTick(
+      () => "ordinary copied text",
+      () => {
+        writes++;
+      },
+      clean,
+      state,
+      { shouldProcess: looksMessy },
+    );
+    expect(result).toBe("skip");
+    expect(writes).toBe(0);
+  });
+
+  it("still cleans messy content under the gate, and reports a summary", async () => {
+    let clip = "\x1b[31mred\x1b[0m";
+    let summary = "";
+    const state: WatchState = { last: "" };
+    const result = await watchTick(
+      () => clip,
+      (s) => {
+        clip = s;
+      },
+      clean,
+      state,
+      { shouldProcess: looksMessy, onClean: (s) => (summary = s) },
+    );
+    expect(result).toBe("cleaned");
+    expect(clip).toBe("red");
+    expect(summary).toContain("cleaned:");
   });
 });

@@ -33,4 +33,5 @@ export { redact } from "./transforms/redact.js";
 export { emulate, EmulateUnavailableError } from "./transforms/emulate.js";
 export { presetPatch, type Preset } from "./presets.js";
 export { loadConfig, validate as validateConfig, configPaths } from "./config.js";
-export { watchTick, runWatch, type WatchState, type TickResult } from "./watch.js";
+export { watchTick, runWatch, looksMessy, type WatchState, type TickResult } from "./watch.js";
+export { summarizeChange } from "./io/summary.js";

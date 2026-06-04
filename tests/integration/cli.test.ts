@@ -91,6 +91,31 @@ describe("cli integration (spawns the built binary)", () => {
     expect(r.stdout).toBe("a & b\n");
   });
 
+  it("--email leaves a leading '$ ' in prose alone (prompts are opt-in)", () => {
+    const r = run(["--email"], "$ 5.00 per item is the price");
+    expect(r.stdout).toBe("$ 5.00 per item is the price\n");
+  });
+
+  it("--email leaves C++ generics alone (html is opt-in)", () => {
+    const r = run(["--email"], "We use vector<int> here.");
+    expect(r.stdout).toBe("We use vector<int> here.\n");
+  });
+
+  it("--email --prompts strips a real shell prompt", () => {
+    const r = run(["--email", "--prompts"], "$ npm test");
+    expect(r.stdout).toBe("npm test\n");
+  });
+
+  it("--email --reflow keeps a heading on its own line (structure-aware)", () => {
+    const r = run(
+      ["--email", "--reflow"],
+      "This is a long enough paragraph line that should be treated as a hard wrap and\n## Next Steps\ndo the thing.",
+    );
+    expect(r.stdout).toBe(
+      "This is a long enough paragraph line that should be treated as a hard wrap and\nNext Steps\ndo the thing.\n",
+    );
+  });
+
   it("exits 2 on an unknown flag", () => {
     const r = run(["--definitely-not-a-flag"]);
     expect(r.status).toBe(2);
