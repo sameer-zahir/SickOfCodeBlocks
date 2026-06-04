@@ -7,20 +7,31 @@
 
 > Paste terminal output — and Markdown / AI answers — into email, Slack, and docs as clean text. No screenshots, no triple-backtick code blocks.
 
+What your terminal emits:
+
+```
+\e[2K\rDownloading [####------] 40%\e[2K\rDownloading [##########] 100%
+\e[32m✔\e[0m  build succeeded
+ master \e]8;;https://ci.example.com/42\aview run\e]8;;\a
+```
+
+What `some-command | socb` gives you:
+
+```
+Downloading [##########] 100%
+✔  build succeeded
+master view run (https://ci.example.com/42)
+```
+
 Raw terminal output is full of stuff that turns to garbage the moment it leaves the terminal: ANSI color codes, progress bars that redrew themselves 200 times, spinner frames, Nerd Font icons that show up as `□`, and box-drawing tables that fall apart in a proportional font. `socb` cleans all of it and gives you plain, readable text.
 
 Stripping colors is the easy 10%. `socb` also does the parts other tools skip:
 
-- **Collapses progress bars & spinners** to their final state (resolves carriage-return / backspace / erase-line redraws).
-- **Flattens multi-line redraws** (docker / cargo / pip) with an optional headless-terminal mode (`--emulate`).
-- **Flattens Markdown to readable prose** — drops `#` headings, `**bold**`, inline `` `code` `` and list markers, and rewrites `[text](url)` to `text (url)`; fenced code is kept **verbatim**. (On with `--email` / `--plain`, or `-m`.)
-- **Converts HTML to text** — strips tags and decodes entities (`&amp;` → `&`).
-- **Tidies PowerShell errors** (`~~~~` underlines + the `+` gutter) and **strips shell prompts** (`$`, `PS C:\>`, `>>>`).
-- **Reflows hard-wrapped paragraphs** so prose flows in a proportional-font email instead of breaking mid-line.
-- **Removes Nerd Font / Powerline glyphs** (Private Use Area) that render as tofu, and **rebuilds box-drawing tables** (incl. Markdown pipe tables) into clean aligned columns.
-- **Strips embedded escape strings** that `strip-ansi` leaks — OSC, plus DCS/APC (sixel, Kitty graphics).
-- **Rewrites hyperlinks** (`OSC 8`) to `text (url)` instead of dropping the URL.
-- **Normalizes** smart quotes/dashes/ellipses to ASCII, **decodes UTF-16 / BOM input** (no Windows mojibake), and tidies whitespace.
+- **Collapses progress bars & spinners** to their final frame (CR / backspace / erase-line redraws), and flattens multi-line redraws like docker/cargo/pip with `--emulate`.
+- **Flattens Markdown & HTML to readable prose** — `#` headings, `**bold**`, inline `` `code` ``, lists, `[text](url)` → `text (url)` — while keeping fenced code **verbatim**. Opt-in (`--email` / `--plain`, `-m`, `--html`).
+- **Rebuilds box-drawing & Markdown tables** into clean aligned columns, and **drops Nerd Font / Powerline glyphs** that render as tofu.
+- **Strips every escape sequence** `strip-ansi` leaks (OSC, DCS/APC, sixel/Kitty) and **rewrites OSC 8 hyperlinks** to `text (url)` instead of dropping the URL.
+- **Tidies PowerShell errors & shell prompts, reflows hard wraps, normalizes** smart quotes/dashes to ASCII, and **decodes UTF-16 / BOM** input (no Windows mojibake).
 - **Optionally redacts** secrets/PII before you share output up the chain (`--redact`).
 
 Zero runtime dependencies on the default path. Works on Windows, macOS, and Linux.
@@ -99,24 +110,6 @@ Register-ScheduledTask -TaskName "socb-watch" -Action $action -Trigger $trigger
 
 (macOS: a `launchd` agent; Linux: a `systemd --user` service or your DE's autostart.)
 
-### Before / after
-
-Raw (what your terminal received):
-
-```
-\e[2K\rDownloading [####------] 40%\e[2K\rDownloading [##########] 100%
-\e[32m✔\e[0m  build succeeded
- master \e]8;;https://ci.example.com/42\aview run\e]8;;\a
-```
-
-After `socb`:
-
-```
-Downloading [##########] 100%
-✔  build succeeded
-master view run (https://ci.example.com/42)
-```
-
 ## Options
 
 ```
@@ -151,7 +144,7 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--no-collapse-blanks` | | Keep runs of blank lines |
 | `--redact` | `-r` | Mask API keys, JWTs, emails, IPs, and home-dir paths |
 | `--watch` | `-w` | Keep cleaning the clipboard in place (Ctrl+C to stop) |
-| `--interval <ms>` | | `--watch` poll interval (default 800) |
+| `--interval <ms>` | | `--watch` poll interval (default 800; 1500 on Windows) |
 | `--slack` / `--email` / `--plain` / `--agent` | | Presets (below) |
 | `--help` / `--version` | `-h` / `-v` | |
 
