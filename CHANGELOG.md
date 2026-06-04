@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- Hosted **web playground** (`docs/`, served via GitHub Pages) for trying socb in
+  the browser — paste messy output, watch it clean live, with preset buttons and a
+  redact toggle. Runs client-side via a new browser bundle (`src/browser.ts`); no
+  change to the published package behavior.
+- `docs/DEMO.md` — a demo script and Q&A cheat sheet.
+
 ## [0.2.1] - 2026-06-04
 
 ### Added

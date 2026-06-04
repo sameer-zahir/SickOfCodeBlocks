@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 360" font-family="ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="13">
+  <rect x="0" y="0" width="980" height="360" rx="14" fill="#1b1d2b"/>
+
+  <!-- BEFORE pane -->
+  <rect x="16" y="16" width="466" height="328" rx="10" fill="#222436" stroke="#2f334d"/>
+  <text x="34" y="44" font-size="12" font-weight="700" fill="#ff757f">BEFORE &#8212; raw  sf project deploy  pasted into Teams</text>
+  <line x1="34" y1="54" x2="464" y2="54" stroke="#2f334d"/>
+  <g fill="#828bb8">
+    <text x="34" y="84"><tspan fill="#565f89">\e[2K\e[36m</tspan>&#10809; Deploying [#####-----] 23/45</text>
+    <text x="34" y="106"><tspan fill="#565f89">\e[2K</tspan>&#10003; Deploying [##########] 45/45</text>
+    <text x="34" y="128"><tspan fill="#565f89">\e[1m</tspan> Status  Name              <tspan fill="#565f89">\e[0m</tspan></text>
+    <text x="34" y="150"> <tspan fill="#565f89">\e[32m</tspan>&#10003;<tspan fill="#565f89">\e[0m</tspan>  AccountService     ApexClass</text>
+    <text x="34" y="172"> <tspan fill="#565f89">\e[31m</tspan>&#10007;<tspan fill="#565f89">\e[0m</tspan>  AccountSvcTest     ApexClass</text>
+    <text x="34" y="194"><tspan fill="#565f89">\e[31m</tspan>=== Deploy Failed ===<tspan fill="#565f89">\e[0m</tspan></text>
+    <text x="34" y="216">AccountSvcTest.cls:42:9 &#8212; Method does not</text>
+    <text x="34" y="238">exist or incorrect signature: assertEquals</text>
+  </g>
+  <text x="34" y="312" font-size="11" fill="#565f89">colors don't render &#183; progress bar spammed 200 lines &#183; unreadable</text>
+
+  <!-- arrow -->
+  <text x="490" y="186" font-size="22" fill="#c099ff" text-anchor="middle">&#8594;</text>
+
+  <!-- AFTER pane -->
+  <rect x="498" y="16" width="466" height="328" rx="10" fill="#222436" stroke="#2f334d"/>
+  <text x="516" y="44" font-size="12" font-weight="700" fill="#c3e88d">AFTER &#8212; socb --teams</text>
+  <line x1="516" y1="54" x2="946" y2="54" stroke="#2f334d"/>
+  <g fill="#c8d3f5">
+    <text x="516" y="84">Deploying [##########] 45/45</text>
+    <text x="516" y="128">Status  Name            Type</text>
+    <text x="516" y="150"><tspan fill="#c3e88d">&#10003;</tspan>       AccountService  ApexClass</text>
+    <text x="516" y="172"><tspan fill="#ff757f">&#10007;</tspan>       AccountSvcTest  ApexClass</text>
+    <text x="516" y="194"><tspan fill="#ff757f">=== Deploy Failed ===</tspan></text>
+    <text x="516" y="216">AccountSvcTest.cls:42:9 &#8212; Method does not</text>
+    <text x="516" y="238">exist or incorrect signature: assertEquals</text>
+  </g>
+  <text x="516" y="312" font-size="11" fill="#c3e88d">clean, aligned, paste-ready &#183; copy &amp; drop into Teams</text>
+</svg>

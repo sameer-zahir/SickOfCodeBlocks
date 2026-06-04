@@ -7,6 +7,8 @@
 
 > Paste terminal output — and Markdown / AI answers — into email, Slack, and docs as clean text. No screenshots, no triple-backtick code blocks.
 
+![Before / after: a Salesforce "sf project deploy" error cleaned for Teams - raw ANSI, a spammed progress bar, and a box-drawing table on the left; clean, aligned, paste-ready text on the right.](docs/hero.svg)
+
 What your terminal emits:
 
 ```
