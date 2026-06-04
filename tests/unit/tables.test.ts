@@ -39,6 +39,10 @@ describe("table detection helpers", () => {
     expect(isBorderRow("|------|-----|")).toBe(true);
     expect(isBorderRow("| data | row |")).toBe(false);
   });
+  it("recognizes GitHub alignment delimiter rows (colons)", () => {
+    expect(isBorderRow("| :--- | ---: |")).toBe(true);
+    expect(isBorderRow("| :--: |")).toBe(true);
+  });
   it("detects a contiguous table block", () => {
     expect(detectTableBlocks(boxTable.split("\n"))).toEqual([
       { start: 0, end: 4 },
@@ -52,6 +56,11 @@ describe("transformTables", () => {
   });
   it("reconstructs a markdown/ASCII pipe table", () => {
     expect(transformTables(mdTable, "reconstruct")).toBe("Name  Age\nBob   30");
+  });
+  it("reconstructs a GitHub-aligned pipe table (colon delimiters)", () => {
+    expect(transformTables("| A | B |\n| :-- | --: |\n| 1 | 2 |", "reconstruct")).toBe(
+      "A  B\n1  2",
+    );
   });
   it("converts box glyphs to ASCII borders", () => {
     expect(transformTables(TL + H(4) + TR, "ascii")).toBe("+----+");

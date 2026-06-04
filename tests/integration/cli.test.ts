@@ -55,6 +55,42 @@ describe("cli integration (spawns the built binary)", () => {
     expect(r.stdout).toBe("Name  Age\nBob   30\n");
   });
 
+  it("flattens Markdown with the --email preset", () => {
+    const r = run(["--email"], "# Title\n\n- **bold** item\n");
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("Title\n\n- bold item\n");
+  });
+
+  it("leaves Markdown literal by default (opt-in only)", () => {
+    const r = run([], "# not a heading by default");
+    expect(r.stdout).toBe("# not a heading by default\n");
+  });
+
+  it("lets --no-markdown override the --email preset", () => {
+    const r = run(["--email", "--no-markdown"], "# Hi");
+    expect(r.stdout).toBe("# Hi\n");
+  });
+
+  it("keeps fenced code verbatim (protected from flattening) under --email", () => {
+    const r = run(["--email"], "```py\ncall(**kwargs)  # see [docs](url)\n```");
+    expect(r.stdout).toBe("call(**kwargs)  # see [docs](url)\n");
+  });
+
+  it("--agent strips ANSI noise but keeps Markdown markup", () => {
+    const r = run(["--agent"], "**bold** \x1b[31mred\x1b[0m");
+    expect(r.stdout).toBe("**bold** red\n");
+  });
+
+  it("--ps tidies a PowerShell error block", () => {
+    const r = run(["--ps"], "At line:1 char:1\n+ Get-Item foo\n+ ~~~~~~~~");
+    expect(r.stdout).toBe("At line:1 char:1\nGet-Item foo\n");
+  });
+
+  it("--html strips tags and decodes entities", () => {
+    const r = run(["--html"], "<p>a &amp; b</p>");
+    expect(r.stdout).toBe("a & b\n");
+  });
+
   it("exits 2 on an unknown flag", () => {
     const r = run(["--definitely-not-a-flag"]);
     expect(r.status).toBe(2);

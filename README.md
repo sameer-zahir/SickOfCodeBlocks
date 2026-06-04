@@ -5,7 +5,7 @@
 [![license: MIT](https://img.shields.io/npm/l/sickofcodeblocks.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/sickofcodeblocks.svg)](https://nodejs.org)
 
-> Paste terminal output into email, Slack, and docs as clean text — no screenshots, no triple-backtick code blocks.
+> Paste terminal output — and Markdown / AI answers — into email, Slack, and docs as clean text. No screenshots, no triple-backtick code blocks.
 
 Raw terminal output is full of stuff that turns to garbage the moment it leaves the terminal: ANSI color codes, progress bars that redrew themselves 200 times, spinner frames, Nerd Font icons that show up as `□`, and box-drawing tables that fall apart in a proportional font. `socb` cleans all of it and gives you plain, readable text.
 
@@ -13,12 +13,14 @@ Stripping colors is the easy 10%. `socb` also does the parts other tools skip:
 
 - **Collapses progress bars & spinners** to their final state (resolves carriage-return / backspace / erase-line redraws).
 - **Flattens multi-line redraws** (docker / cargo / pip) with an optional headless-terminal mode (`--emulate`).
-- **Removes Nerd Font / Powerline glyphs** (Private Use Area) that render as tofu.
-- **Strips Markdown code fences** (```` ``` ````/`~~~`) and PowerShell `~~~~~` error underlines so the paste isn't itself a code block.
-- **Rebuilds box-drawing tables** into clean aligned columns.
+- **Flattens Markdown to readable prose** — drops `#` headings, `**bold**`, inline `` `code` `` and list markers, and rewrites `[text](url)` to `text (url)`; fenced code is kept **verbatim**. (On with `--email` / `--plain`, or `-m`.)
+- **Converts HTML to text** — strips tags and decodes entities (`&amp;` → `&`).
+- **Tidies PowerShell errors** (`~~~~` underlines + the `+` gutter) and **strips shell prompts** (`$`, `PS C:\>`, `>>>`).
+- **Reflows hard-wrapped paragraphs** so prose flows in a proportional-font email instead of breaking mid-line.
+- **Removes Nerd Font / Powerline glyphs** (Private Use Area) that render as tofu, and **rebuilds box-drawing tables** (incl. Markdown pipe tables) into clean aligned columns.
 - **Strips embedded escape strings** that `strip-ansi` leaks — OSC, plus DCS/APC (sixel, Kitty graphics).
 - **Rewrites hyperlinks** (`OSC 8`) to `text (url)` instead of dropping the URL.
-- **Normalizes** smart quotes/dashes/ellipses to ASCII and tidies whitespace.
+- **Normalizes** smart quotes/dashes/ellipses to ASCII, **decodes UTF-16 / BOM input** (no Windows mojibake), and tidies whitespace.
 - **Optionally redacts** secrets/PII before you share output up the chain (`--redact`).
 
 Zero runtime dependencies on the default path. Works on Windows, macOS, and Linux.
@@ -119,6 +121,12 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--strip-emoji` | | Remove emoji (+ ZWJ / variation selectors / skin tones) |
 | `--no-glyphs` | | Keep Nerd Font / Private-Use glyphs |
 | `--no-fences` | | Keep Markdown code fences + PowerShell `~` underlines (default strips them) |
+| `--markdown` | `-m` | Flatten Markdown to readable text (code kept verbatim); on in `--email` / `--plain` |
+| `--no-markdown` | | Keep Markdown markup literal (the default) |
+| `--html` | | Strip HTML tags and decode entities (`&amp;` → `&`) |
+| `--prompts` | | Strip leading shell prompts (`$`, `PS C:\>`, `>>>`) |
+| `--reflow` | | Rejoin hard-wrapped prose into flowing paragraphs |
+| `--powershell` / `--ps` | | Tidy pasted PowerShell errors (`~` underlines + `+` gutter) |
 | `--no-typographic` | | Keep smart quotes / em-dashes / ellipsis (don't convert to ASCII) |
 | `--arrows` | | Also convert arrows (`→` becomes `->`) |
 | `--expand-tabs` / `--tab-width <n>` | | Convert tabs to spaces (default width 4) |
@@ -127,18 +135,47 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--redact` | `-r` | Mask API keys, JWTs, emails, IPs, and home-dir paths |
 | `--watch` | `-w` | Keep cleaning the clipboard in place (Ctrl+C to stop) |
 | `--interval <ms>` | | `--watch` poll interval (default 800) |
-| `--slack` / `--email` / `--plain` | | Presets (below) |
+| `--slack` / `--email` / `--plain` / `--agent` | | Presets (below) |
 | `--help` / `--version` | `-h` / `-v` | |
 
 ### Presets
 
-Presets set a bundle of defaults; any explicit flag still overrides them.
+Presets set a bundle of defaults; any explicit flag still overrides them (e.g. `--email --no-markdown`).
 
-| Preset | Tables | Emoji | Typography | Notes |
-|---|---|---|---|---|
-| `--slack` | reconstruct | keep | → ASCII | Slack renders Unicode; aligned tables read well |
-| `--email` | strip | strip | → ASCII | Proportional fonts can't align columns |
-| `--plain` | strip | strip | → ASCII | Maximum compatibility; arrows + tabs→spaces too |
+| Preset | Tables | Markdown / HTML | Notes |
+|---|---|---|---|
+| `--slack` | reconstruct | left as-is | Slack renders Unicode; aligned tables read well |
+| `--email` | strip | **flattened** | + reflow wraps, strip prompts, tidy PowerShell. For proportional fonts (email / Docs / Word) |
+| `--plain` | strip | **flattened** | The `--email` bundle + arrows + tabs→spaces. Maximum compatibility |
+| `--agent` | strip | kept (structure) | Denoise for feeding output **into** a model: strips ANSI/box/glyph noise but keeps Markdown + Unicode (no flattening, no ASCII folding) |
+
+## Markdown & rich paste
+
+Pasting a Claude / ChatGPT answer (or a README) into email drags along `#`, `**`, backticks, and ` ``` ` fences. `--markdown` (`-m`, and on by default in `--email` / `--plain`) flattens it to plain prose while keeping fenced code **verbatim**:
+
+Input:
+
+````md
+## Deploy
+1. Run `npm ci`, then **build**.
+2. See the [runbook](https://wiki/runbook).
+
+```bash
+export TOKEN=abc   # keep me exactly
+```
+````
+
+`socb --email`:
+
+```
+Deploy
+1. Run npm ci, then build.
+2. See the runbook (https://wiki/runbook).
+
+export TOKEN=abc   # keep me exactly
+```
+
+It's **opt-in**, so a bare `socb` never mangles raw terminal output (where `*`, `_`, `#`, backticks are literal). `--html` does the same for HTML copied from a browser, Slack, or Teams.
 
 ## Tables
 
@@ -161,15 +198,57 @@ socb --clip
 
 (`cmd.exe` and POSIX shells pipe bytes faithfully, so `some-command | socb` is fine there.)
 
+## Use with AI agents (MCP + hook)
+
+`socb` ships an MCP server so Claude Desktop, Claude Code, and Codex can clean text on demand, plus an experimental hook that denoises shell output before it reaches the model.
+
+### MCP server
+
+`socb-mcp` is a stdio MCP server exposing one tool, `sanitize_text(text, preset?, options?)`.
+
+Claude Code / Claude Desktop — add to `.mcp.json` (project) or your user config:
+
+```json
+{ "mcpServers": { "socb": { "command": "socb-mcp" } } }
+```
+
+Codex — add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.socb]
+command = "socb-mcp"
+```
+
+(If `socb-mcp` isn't on `PATH`, use `npx -y sickofcodeblocks socb-mcp`.) The server needs the optional `@modelcontextprotocol/sdk` dependency, which installs by default with the package — the plain CLI path stays dependency-free.
+
+### Auto-clean hook (experimental)
+
+`hooks/socb-clean.mjs` is a Claude Code **PreToolUse** hook that rewrites noisy Bash commands (`npm`, `pip`, `cargo`, `docker`, `pytest`, …) to pipe their output through `socb --agent`, cutting ANSI / progress-bar tokens before they hit the model's context. It preserves the original exit code and falls back to raw output if `socb` is missing. Enable it in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "node /abs/path/to/hooks/socb-clean.mjs" }]
+      }
+    ]
+  }
+}
+```
+
+It is conservative (only known-noisy tools; never multi-line / heredoc commands) and **experimental** — the MCP `sanitize_text` tool is the dependable path. On Windows it relies on the Bash tool running through git-bash (byte-faithful pipes); native PowerShell piping is not, so don't wire it to a PowerShell runner.
+
 ## Use as a library
 
 ```ts
 import { sanitize } from "sickofcodeblocks";
 
-const clean = await sanitize(rawTerminalOutput, { tableMode: "strip", redact: true });
+const clean = await sanitize(rawTerminalOutput, { tableMode: "strip", markdown: true, redact: true });
 ```
 
-Individual transforms (`stripEscapes`, `resolveOverwrites`, `transformTables`, `redact`, …) are exported too.
+Individual transforms (`stripEscapes`, `resolveOverwrites`, `transformTables`, `flattenMarkdown`, `htmlToText`, `cleanPowerShell`, `stripPrompts`, `reflowParagraphs`, `redact`, `decodeInput`, …) are exported too.
 
 ## License
 

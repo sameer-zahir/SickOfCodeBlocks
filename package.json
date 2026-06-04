@@ -24,10 +24,12 @@
   },
   "bin": {
     "sickofcodeblocks": "dist/cli.js",
-    "socb": "dist/cli.js"
+    "socb": "dist/cli.js",
+    "socb-mcp": "dist/mcp.js"
   },
   "files": [
     "dist",
+    "hooks",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -55,6 +57,7 @@
     "vitest": "^4.1.8"
   },
   "optionalDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@xterm/headless": "^6.0.0"
   }
 }

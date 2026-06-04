@@ -72,6 +72,17 @@ export function parseCli(argv: string[]): ParsedCli {
         "keep-glyphs": { type: "boolean" },
         "no-fences": { type: "boolean" },
         "keep-fences": { type: "boolean" },
+        markdown: { type: "boolean", short: "m" },
+        "no-markdown": { type: "boolean" },
+        html: { type: "boolean" },
+        "no-html": { type: "boolean" },
+        prompts: { type: "boolean" },
+        "no-prompts": { type: "boolean" },
+        reflow: { type: "boolean" },
+        "no-reflow": { type: "boolean" },
+        powershell: { type: "boolean" },
+        ps: { type: "boolean" },
+        "no-powershell": { type: "boolean" },
         "no-typographic": { type: "boolean" },
         arrows: { type: "boolean" },
         "expand-tabs": { type: "boolean" },
@@ -84,6 +95,7 @@ export function parseCli(argv: string[]): ParsedCli {
         slack: { type: "boolean" },
         email: { type: "boolean" },
         plain: { type: "boolean" },
+        agent: { type: "boolean" },
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
       },
@@ -106,7 +118,9 @@ export function parseCli(argv: string[]): ParsedCli {
       ? "email"
       : v.slack
         ? "slack"
-        : null;
+        : v.agent
+          ? "agent"
+          : null;
   if (preset) o = { ...o, ...presetPatch(preset) };
 
   if (v.table !== undefined) {
@@ -124,6 +138,16 @@ export function parseCli(argv: string[]): ParsedCli {
   if (v["strip-emoji"]) o.stripEmoji = true;
   if (v["no-glyphs"] || v["keep-glyphs"]) o.stripGlyphs = false;
   if (v["no-fences"] || v["keep-fences"]) o.stripFences = false;
+  if (v.markdown) o.markdown = true;
+  if (v["no-markdown"]) o.markdown = false;
+  if (v.html) o.html = true;
+  if (v["no-html"]) o.html = false;
+  if (v.prompts) o.prompts = true;
+  if (v["no-prompts"]) o.prompts = false;
+  if (v.reflow) o.reflow = true;
+  if (v["no-reflow"]) o.reflow = false;
+  if (v.powershell || v.ps) o.powershell = true;
+  if (v["no-powershell"]) o.powershell = false;
   if (v["no-typographic"]) o.typographic = false;
   if (v.arrows) o.arrows = true;
   if (v["no-collapse-blanks"]) o.collapseBlankLines = false;
@@ -196,6 +220,13 @@ OPTIONS
       --no-glyphs       keep Nerd Font / Private-Use glyphs (default strips them)
       --no-fences       keep Markdown code fences + PowerShell ~ underlines
                         (default strips these marker lines)
+  -m, --markdown        flatten Markdown to readable text: headings, lists,
+                        **bold**, [links](url) -> text (url); code kept verbatim
+      --no-markdown     keep Markdown markup literal (the default)
+      --html            strip HTML tags and decode entities (&amp; -> &)
+      --prompts         strip leading shell prompts ($, PS C:\>, >>>)
+      --reflow          rejoin hard-wrapped prose into flowing paragraphs
+      --powershell, --ps  tidy pasted PowerShell errors (~ underlines + "+" gutter)
       --no-typographic  keep smart quotes / em-dashes / ellipsis (default -> ASCII)
       --arrows          also convert arrows  (-> for the right arrow, etc.)
       --expand-tabs     convert tabs to spaces (4 wide)
@@ -210,8 +241,10 @@ OPTIONS
 
 PRESETS  (apply a bundle; individual flags still override)
       --slack           tables reconstructed, emoji kept, typographic on
-      --email           tables stripped, emoji stripped, typographic on
-      --plain           tables stripped, emoji+glyphs stripped, arrows + tabs->spaces
+      --email           + flatten Markdown/HTML, strip prompts, reflow wraps
+      --plain           email preset + arrows + tabs->spaces (max compatibility)
+      --agent           denoise for feeding output INTO a model: strip ANSI/box/
+                        glyph noise, KEEP Markdown structure + Unicode (no folding)
 
 CONFIG  (set persistent defaults so you don't repeat flags)
   ~/.socbrc.json  or  ./.socbrc.json , e.g.  { "redact": true, "tableMode": "strip" }

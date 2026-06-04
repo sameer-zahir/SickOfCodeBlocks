@@ -52,8 +52,9 @@ export function isBorderRow(line: string): boolean {
       hasBorder = true;
     } else if (ch === "+" || ch === "-" || ch === "=") {
       hasBorder = true;
-    } else if (ch === "|" || ch === " ") {
-      // separators / padding are allowed in a border row but don't qualify it
+    } else if (ch === "|" || ch === " " || ch === ":") {
+      // separators / padding / Markdown alignment colons are allowed in a border
+      // row but don't by themselves qualify it (":" only appears in "| :--: |")
     } else {
       return false;
     }
