@@ -18,6 +18,12 @@
   ],
   "license": "MIT",
   "author": "Sameer Zahir <sameerzahir97@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sameer-zahir/SickOfCodeBlocks.git"
+  },
+  "homepage": "https://sameer-zahir.github.io/SickOfCodeBlocks/",
+  "bugs": "https://github.com/sameer-zahir/SickOfCodeBlocks/issues",
   "type": "module",
   "engines": {
     "node": ">=20"
