@@ -3,7 +3,7 @@
 Everything you need to present this confidently in ~5 minutes. You don't type a single
 command live — you click buttons in the playground. Read this once, keep it open in a tab.
 
-**Playground:** https://sameerzahir97-cloud.github.io/SickOfCodeBlocks/
+**Playground:** https://sameer-zahir.github.io/SickOfCodeBlocks/
 **Offline backup:** open `docs/index.html` from the repo in any browser (works with no internet).
 
 ---

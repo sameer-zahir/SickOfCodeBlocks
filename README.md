@@ -1,7 +1,7 @@
 # SickOfCodeBlocks (`socb`)
 
 [![npm version](https://img.shields.io/npm/v/sickofcodeblocks.svg)](https://www.npmjs.com/package/sickofcodeblocks)
-[![CI](https://github.com/sameerzahir97-cloud/SickOfCodeBlocks/actions/workflows/ci.yml/badge.svg)](https://github.com/sameerzahir97-cloud/SickOfCodeBlocks/actions/workflows/ci.yml)
+[![CI](https://github.com/sameer-zahir/SickOfCodeBlocks/actions/workflows/ci.yml/badge.svg)](https://github.com/sameer-zahir/SickOfCodeBlocks/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/npm/l/sickofcodeblocks.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/sickofcodeblocks.svg)](https://nodejs.org)
 
@@ -25,7 +25,7 @@ Downloading [##########] 100%
 master view run (https://ci.example.com/42)
 ```
 
-**▶ [Try it live in your browser](https://sameerzahir97-cloud.github.io/SickOfCodeBlocks/)** — paste your own terminal, Salesforce CLI, or AI output and watch it clean up. Runs 100% client-side; nothing you paste leaves your machine.
+**▶ [Try it live in your browser](https://sameer-zahir.github.io/SickOfCodeBlocks/)** — paste your own terminal, Salesforce CLI, or AI output and watch it clean up. Runs 100% client-side; nothing you paste leaves your machine.
 
 Raw terminal output is full of stuff that turns to garbage the moment it leaves the terminal: ANSI color codes, progress bars that redrew themselves 200 times, spinner frames, Nerd Font icons that show up as `□`, and box-drawing tables that fall apart in a proportional font. `socb` cleans all of it and gives you plain, readable text.
 
