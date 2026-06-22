@@ -4,3 +4,8 @@ coverage/
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# Env files (defensive — none with secrets today, but never commit one)
+.env
+.env.*
+!.env.example
